@@ -4,6 +4,6 @@ use Test;
 use TestFiles;
 use Text::Wrap;
 
-TestFiles::run(sub ($in, $out, $filename) {
+TestFiles::run-tests(sub ($in, $out, $filename) {
     is fill(' ' x 4, ' ', $in.slurp), $out.slurp, $filename;
 });

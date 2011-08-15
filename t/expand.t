@@ -4,6 +4,6 @@ use Test;
 use TestFiles;
 use Text::Tabs;
 
-TestFiles::run(sub ($in, $out, $filename) {
+TestFiles::run-tests(sub ($in, $out, $filename) {
     is expand($in.slurp), $out.slurp, $filename;
 });

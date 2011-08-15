@@ -5,7 +5,7 @@ sub basename {
     ($*PROGRAM_NAME ~~ m{ '/' (<-[/]>+) $ })[0];
 }
 
-our sub run(
+our sub run-tests(
     Callable $test-block,
     Str $input-dir = "t_files/{basename}.input",
     Str $output-dir = "t_files/{basename}.output",
