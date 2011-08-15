@@ -4,7 +4,7 @@ use Test;
 use TestFiles;
 use Text::Wrap;
 
-TestFiles::run(
+TestFiles::run-tests(
     tests-per-block => 2,
     test-block => sub ($in, $out, $filename) {
         my $in-str = $in.slurp;

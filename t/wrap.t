@@ -4,7 +4,7 @@ use Test;
 use TestFiles;
 use Text::Wrap;
 
-TestFiles::run(
+TestFiles::run-tests(
     test-block => sub ($in, $out, $filename) {
         my @in = $in.lines;
         my @out = $out.lines;
