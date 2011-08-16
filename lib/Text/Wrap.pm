@@ -47,8 +47,8 @@ our $separator = "\n";
 our $separator2;
 
 sub wrap(Str $para-indent, Str $body-indent,
-         #`[Int] :$tabstop      = 8,
-         #`[Int] :$columns      = $Text::Wrap::columns,
+         Int :$tabstop      = 8,
+         Int :$columns      = $Text::Wrap::columns,
          Str :$huge         = $Text::Wrap::huge,
          Str :$separator    = $Text::Wrap::separator,
          Str :$separator2   = $Text::Wrap::separator2,
