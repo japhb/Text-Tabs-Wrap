@@ -19,6 +19,6 @@ our sub run-tests(
         my $in = open("$input-dir/$filename");
         my $out = open("$output-dir/$filename");
 
-        $test-block(:$in, :$out, :$filename);
+        $test-block($in, $out, $filename);
     }
 }

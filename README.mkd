@@ -11,12 +11,12 @@ Unix `expand(1)` and `unexpand(1)` commands do: adding or removing tabs from a d
 Text::Wrap gives you `wrap` and `fill` functions. `wrap` will break up long lines; it doesn't join
 short lines together. `fill` reformats entire blocks of text, similar to vi's `gq` command.
 
-Current status (2011-03-16)
+Current status (2011-08-15)
 ---------------------------
 
-Works in Rakudo, most test will pass apart from a few TODOs relying on NYI bits of regex.
-
-The modules will load in Niecza, but aren't quite working yet...
+* Rakudo master: most tests pass apart from a few TODOs relying on NYI bits of regex.
+* Rakudo nom: dies on all tests, "method 'rxtype' not found" and missing `&dir`
+* Niecza: dies on all tests, "Regex modifier p not yet implemented" and missing `&dir`
 
 Building Text-Tabs-Wrap
 -----------------------
