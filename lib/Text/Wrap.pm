@@ -44,7 +44,7 @@ our $huge = 'wrap';
 our $columns = 76;
 our $unexpand = True;
 our $separator = "\n";
-our $separator2;
+our $separator2 = Str;
 
 sub wrap(Str $para-indent, Str $body-indent,
          Int :$tabstop      = 8,
@@ -62,7 +62,8 @@ sub wrap(Str $para-indent, Str $body-indent,
     my %body-line = margin => expand($body-indent).chars;
 
     # If either margin is larger than $columns, emit a warning
-    my $content-width = [max] $columns, %first-line<margin>, %body-line<margin>;
+    # XXX niecza workaround: square brackets get the entire list all at once
+    my $content-width = [max] $columns, ([max] %first-line<margin>, %body-line<margin>);
     if $columns < $content-width {
         warn "Increasing column width from $columns to $content-width to contain requested indent";
     }
