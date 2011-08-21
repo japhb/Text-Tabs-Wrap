@@ -56,10 +56,10 @@ sub wrap(Str $para-indent, Str $body-indent,
          Regex :$break      = $Text::Wrap::break,
          *@texts) is export {
     my $tail = pop(@texts);
-    my $text = expand(@texts.map({ /\s+$/ ?? $_ !! $_ ~ ' ' }).join ~ $tail);
+    my $text = expand(:$tabstop, @texts.map({ /\s+$/ ?? $_ !! $_ ~ ' ' }).join ~ $tail);
 
-    my %first-line = margin => expand($para-indent).chars;
-    my %body-line = margin => expand($body-indent).chars;
+    my %first-line = margin => expand(:$tabstop, $para-indent).chars;
+    my %body-line = margin => expand(:$tabstop, $body-indent).chars;
 
     # If either margin is larger than $columns, emit a warning
     # XXX niecza workaround: square brackets get the entire list all at once
@@ -94,7 +94,7 @@ sub wrap(Str $para-indent, Str $body-indent,
     my $pos = 0; # Input regex cursor
     my $old-pos;
 
-    sub unexpand-if { $unexpand ?? unexpand($^a) !! $^a };
+    sub unexpand-if { $unexpand ?? unexpand(:$tabstop, $^a) !! $^a };
 
     while $pos <= $text.chars and $text !~~ m:p($pos)/\s*$/ {
         $old-pos = $pos;
