@@ -55,7 +55,7 @@ sub unexpand(:$tabstop = 8, *@in) is export {
             my $expanded = expand($^line);
             my @chunks = ($expanded.substr($_, $tabstop) for 0, $tabstop ...^ * >= $expanded.chars);
             my $tail = pop(@chunks) // '';
-            @chunks.map(*.subst(/\s\s+$/, "\t")).join
+            @chunks».subst(/\s\s+$/, "\t").join
                   ~ ($tail eq ' ' x $tabstop ?? "\t" !! $tail);
         }).join("\n");
     }
