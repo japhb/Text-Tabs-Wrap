@@ -3,5 +3,5 @@
     "version"       : "*",
     "description"   : "Simple line-wrapping and tab [un]expansion tools",
     "depends"       : [],
-    "source-url"    : "git://github.com/Takadonet/Text-Tabs-Wrap.git"
+    "source-url"    : "git://github.com/flussence/Text-Tabs-Wrap.git"
 }
