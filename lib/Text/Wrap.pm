@@ -100,14 +100,14 @@ sub wrap(Str $para-indent, Str $body-indent,
         $old-pos = $pos;
 
         # Grab as many whole words as possible that'll fit in $current-line-content
-        if $text ~~ m:p($pos)/(\N**0..*) <?{$0.chars <= %current<content>}> (<$break>|\n+|$)/ {
+        if $text ~~ m:p($pos)/(\N ** 0..*) <?{$0.chars <= %current<content>}> (<$break>|\n+|$)/ {
             $pos = $0.to + 1;
             $remainder = $1;
             $out ~= unexpand-if($output-delimiter ~ %current<indent> ~ $0);
         }
         # If that fails, the behaviour depends on the setting of $huge -
         #  - Eat a full line's worth of characters whether or not there's a word break at the end
-        elsif $huge eq 'wrap' and $text ~~ m:p($pos)/(\N**0..*) <?{$0.chars == %current<content>}>/ {
+        elsif $huge eq 'wrap' and $text ~~ m:p($pos)/(\N ** 0..*) <?{$0.chars == %current<content>}>/ {
             $pos = $/.to;
             $remainder = ($separator2 or $separator);
             $out ~= unexpand-if($output-delimiter ~ %current<indent> ~ $0);
