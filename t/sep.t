@@ -7,8 +7,8 @@ use Text::Wrap;
 TestFiles::run-tests(
     tests-per-block => 2,
     test-block => sub ($in, $out, $filename) {
-        my $in-str = $in.slurp;
-        my $out-str = $out.slurp;
+        my Str $in-str = $in.slurp;
+        my Str $out-str = $out.slurp;
         my &wrapper = &wrap.assuming('   ', ' ', :separator('='));
 
         is  &wrapper($in-str),
