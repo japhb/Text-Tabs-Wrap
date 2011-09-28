@@ -5,8 +5,7 @@ use TestFiles;
 use Text::Wrap;
 
 TestFiles::run-tests(
-    tests-per-block => 2,
-    test-block => sub ($in, $out, $filename) {
+    sub ($in, $out, $filename) {
         my Str $in-str = $in.slurp;
         my Str $out-str = $out.slurp;
         my &wrapper = &wrap.assuming('   ', ' ', :separator('='));
@@ -22,5 +21,6 @@ TestFiles::run-tests(
         is  &wrapper(@in),
             $out-str,
             "$filename - sep.t (array of lines)";
-    }
+    },
+    :tests-per-block(2)
 );

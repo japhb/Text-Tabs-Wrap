@@ -7,10 +7,10 @@ sub basename {
 
 our sub run-tests(
     Callable $test-block,
-    Str $input-dir = "t_files/{basename}.input",
-    Str $output-dir = "t_files/{basename}.output",
-    Int $tests-per-block = 1,
-    Int $add-to-plan = 0
+    Str :$input-dir = "t_files/{basename}.input",
+    Str :$output-dir = "t_files/{basename}.output",
+    Int :$tests-per-block = 1,
+    Int :$add-to-plan = 0
 ) {
     my @files = dir($output-dir);
     plan $tests-per-block * @files + $add-to-plan;

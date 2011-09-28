@@ -7,9 +7,11 @@ use Text::Wrap;
 
 plan 2;
 
-my $leading-indent = " (Karl-Bonhoeffer-Nervenklinik zwischen Hermann-Piper-Str. und U-Bahnhof) ";
-my $paragraph-indent = " ";
-my $main-text = "(5079,19635 5124,19634 5228,19320 5246,19244)\n";
+my Str $leading-indent =
+        " (Karl-Bonhoeffer-Nervenklinik zwischen Hermann-Piper-Str. und U-Bahnhof) ";
+my Str $paragraph-indent = " ";
+my Str $main-text =
+        "(5079,19635 5124,19634 5228,19320 5246,19244)\n";
 
 diag {:$leading-indent.perl} ~ $leading-indent.chars.fmt(' %d chars');
 diag {:$main-text.perl} ~ $main-text.chars.fmt(' %d chars');
