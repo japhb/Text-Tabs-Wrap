@@ -9,8 +9,8 @@ TestFiles::run-tests(
         my @in = $in.lines;
         my @out = $out.lines;
 
-        is  wrap('   ', ' ', @in.join("\n"), break => rx{\s}),
+        is  wrap('   ', ' ', @in.join("\n"), break => rx{\d}),
             @out.join("\n"),
-            "$filename - wrap.t";
+            "$filename - wrap_digit.t";
     }
 );
