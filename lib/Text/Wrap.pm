@@ -141,13 +141,13 @@ sub wrap(Str $para-indent,
             }
         }
 
-        # If we get here, something went wrong
         if $content-width < 2 {
-            # $content-width < 2, attempt to recover by expanding it.
+            # attempt to recover by expanding it
             warn "Failed to wrap with text width set to '$content-width', retrying with 2";
             return wrap($para-indent, $body-indent, :columns(2), @texts);
         }
         else {
+            # If we get here, something went wrong
             die "Couldn't wrap text to text width '$content-width' and unable to recover";
         }
 
@@ -298,6 +298,6 @@ original software.
 =item 3.
 This notice may not be removed or altered from any source distribution.
 
-=end pod
+=for vim: set ft=perl6 :
 
-# vim: set ft=perl6 :
+=end pod
