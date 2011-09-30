@@ -93,8 +93,8 @@ sub wrap(Str $para-indent,
     my Str $out = ''; # Output buffer
     my Str $output-delimiter = ''; # Usually \n
     my Str $remainder = ''; # Buffer to catch trailing text
-    my Int $pos = 0; # Input regex cursor
-    my Int $old-pos = -1;
+    my Numeric $pos = 0; # Input regex cursor
+    my Numeric $old-pos = -1;
 
     sub unexpand-if { $unexpand ?? unexpand(:$tabstop, $^a) !! $^a };
 
