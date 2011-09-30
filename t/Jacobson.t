@@ -13,6 +13,8 @@ plan +@input;
 my $break = rx{<?after <[,.]>>};
 
 for @input.kv -> $num, $str {
-    todo (1+$num) => '<?after> NYI in Rakudo';
-    lives_ok { wrap('', '', $str, :huge<overflow>, :columns(9), :$break) }, "Test {1+$num} ran"
+    # fails in rakudo; "after" NYI
+    lives_ok {
+        wrap('', '', $str, :huge<overflow>, :columns(9), :$break)
+    }, "Test {1+$num} ran"
 }
