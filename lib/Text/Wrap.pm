@@ -102,52 +102,72 @@ sub wrap(Str $para-indent,
         $old-pos = $pos;
 
         # Grab as many whole words as possible that'll fit in $current-line-content
-        if $text ~~ m:p($pos)/(\N ** 0..*) <?{$0.Str.chars <= %current<content>}> (<$break>|\n+|$)/ {
+        if $text ~~ m:p($pos)/(\N ** {0..%current<content>}) (<$break>|\n+|$)/ {
+
             $pos = $0.to + 1;
             $remainder = $1.Str;
             $out ~= unexpand-if($output-delimiter ~ %current<indent> ~ $0);
-        }
-        # If that fails, the behaviour depends on the setting of $huge -
-        #  - Eat a full line's worth of characters whether or not there's a word break at the end
-        elsif $huge eq 'wrap'
-          and $text ~~ m:p($pos)/(\N ** 0..*) <?{$0.Str.chars == %current<content>}>/ {
 
-            $pos = $/.to;
-            $remainder = ($separator2 or $separator);
-            $out ~= unexpand-if($output-delimiter ~ %current<indent> ~ $0);
+            next;
         }
-        # - Grab up to the next word-break, line-break or end of text regardless of length
-        elsif $huge eq 'overflow'
-          and $text ~~ m:p($pos)/(\N*?) (<$break>|\n+|$)/ {
 
-            $pos = $0.to;
-            $remainder = $1.Str;
-            $out ~= unexpand-if($output-delimiter ~ %current<indent> ~ $0);
+        # If that fails, the behaviour depends on the setting of $huge:
+        given $huge {
+            # Hard-wrap at the specified width
+            when 'wrap' {
+                if $text ~~ m:p($pos)/(\N ** {0..%current<content>})/ {
+                    $pos = $/.to;
+                    $remainder = ($separator2 or $separator);
+                    $out ~= unexpand-if($output-delimiter ~ %current<indent> ~ $0);
+
+                    next;
+                }
+            }
+
+            # Grab up to the next word-break, line-break or end of text regardless of length
+            when 'overflow' {
+                if $text ~~ m:p($pos)/(\N*?) (<$break>|\n+|$)/ {
+                    $pos = $0.to;
+                    $remainder = $1.Str;
+                    $out ~= unexpand-if($output-delimiter ~ %current<indent> ~ $0);
+
+                    next;
+                }
+            }
+
+            # Throw an exception if asked to do so
+            when 'die' {
+                die "Couldn't wrap text to requested text width '$content-width'";
+            }
         }
-        elsif $huge eq 'die' or $content-width >= 2 {
-            die "Couldn't wrap text - requested text width '$content-width' is too small";
-        }
-        else {
+
+        # If we get here, something went wrong
+        if $content-width < 2 {
             # $content-width < 2, attempt to recover by expanding it.
             warn "Failed to wrap with text width set to '$content-width', retrying with 2";
             return wrap($para-indent, $body-indent, :columns(2), @texts);
         }
-
-        if $old-pos == $pos and %current<content> == %body-line<content> {
-            die 'Infinite loop detected, please smack flussence with the cluebat';
+        else {
+            die "Couldn't wrap text to text width '$content-width' and unable to recover";
         }
 
-        # Replace this after the first line is done
-        %current = (
-            first-line => False,
-            content => %body-line<content>,
-            indent => $body-indent,
-        ) if %current<first-line>;
+        continue {
+            if $old-pos == $pos and %current<content> == %body-line<content> {
+                die 'Infinite loop detected, please smack flussence with the cluebat';
+            }
 
-        $output-delimiter =
-            $separator2 ?? $remainder eq "\n" ?? "\n"
-                                              !! $separator2
-                        !! $separator;
+            # Replace this after the first line is done
+            %current = (
+                first-line => False,
+                content => %body-line<content>,
+                indent => $body-indent,
+            ) if %current<first-line>;
+
+            $output-delimiter =
+                $separator2 ?? $remainder eq "\n" ?? "\n"
+                                                  !! $separator2
+                            !! $separator;
+        }
     }
 
     return $out ~ $remainder;
