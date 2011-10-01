@@ -298,6 +298,6 @@ original software.
 =item 3.
 This notice may not be removed or altered from any source distribution.
 
-=for vim: set ft=perl6 :
-
 =end pod
+
+# vim: set ft=perl6 :
