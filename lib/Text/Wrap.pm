@@ -145,11 +145,7 @@ sub wrap(Str $para-indent,
             die "Couldn't wrap text to text width '$content-width' and unable to recover";
         }
 
-        continue {
-            if $old-pos == $pos and %current<content> == %body-line<content> {
-                die 'Infinite loop detected, please smack flussence with the cluebat';
-            }
-
+        NEXT {
             # Replace this after the first line is done
             %current = (
                 first-line => False,
@@ -158,7 +154,7 @@ sub wrap(Str $para-indent,
             ) if %current<first-line>;
 
             $output-delimiter =
-                $separator2 ?? $remainder eq "\n" ?? "\n"
+                $separator2 ?? $remainder eq "\n" ?? $remainder
                                                   !! $separator2
                             !! $separator;
         }
