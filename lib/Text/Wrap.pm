@@ -38,11 +38,13 @@ Both C<wrap()> and C<fill()> return a single string.
 
 =end pod
 
+enum Overflow <break keep error>;
+
 sub wrap(Str $para-indent,
          Str $body-indent,
          Int :$tabstop      = 8,
          Int :$columns      = 76,
-         Str :$huge         = 'wrap',
+         Str :$long-lines   = Overflow::break,
          Str :$separator    = "\n",
          Str :$separator2   = Str,
          Bool :$unexpand    = True,
@@ -103,8 +105,8 @@ sub wrap(Str $para-indent,
             next;
         }
 
-        # If that fails, the behaviour depends on the setting of $huge:
-        given $huge {
+        # If that fails, the behaviour depends on the setting of $long-lines:
+        given $long-lines {
             # Hard-wrap at the specified width
             when 'wrap' {
                 if $text ~~ m:p($pos)/(\N ** {0..%current<content>})/ {
@@ -226,18 +228,18 @@ the input are preserved.
 =end item
 
 =begin item
-C<:$huge> (default: C<'wrap'>)
+C<:$long-lines> (default: C<Overflow::break>)
 
-This defines the behaviour when encountering a "huge" word (anything that can't be normally broken
-before C<$columns> characters on the line). 3 values are accepted:
+This defines the behaviour when encountering an oversized "word" (anything that can't be normally
+broken before C<$columns> characters on the line). 3 values are accepted:
 
-=defn C<'wrap'>
+=defn C<Overflow::break>
 C<wrap()> inserts a line break in the word at column C<$columns>.
 
-=defn C<'overflow'>
+=defn C<Overflow::keep>
 Words longer than C<$columns> are put on a line by themselves, but otherwise left unwrapped.
 
-=defn C<'die'>
+=defn C<Overflow::error>
 C<wrap()> dies upon finding a word it can't fit into the space allocated.
 =end item
 
