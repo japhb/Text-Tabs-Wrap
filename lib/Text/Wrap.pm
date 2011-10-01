@@ -38,23 +38,15 @@ Both C<wrap()> and C<fill()> return a single string.
 
 =end pod
 
-# See below for documnentation of these options
-our $break = rx{\s};
-our $huge = 'wrap';
-our $columns = 76;
-our $unexpand = True;
-our $separator = "\n";
-our $separator2 = Str;
-
 sub wrap(Str $para-indent,
          Str $body-indent,
          Int :$tabstop      = 8,
-         Int :$columns      = $Text::Wrap::columns,
-         Str :$huge         = $Text::Wrap::huge,
-         Str :$separator    = $Text::Wrap::separator,
-         Str :$separator2   = $Text::Wrap::separator2,
-         Bool :$unexpand    = $Text::Wrap::unexpand,
-         Regex :$break      = $Text::Wrap::break,
+         Int :$columns      = 76,
+         Str :$huge         = 'wrap',
+         Str :$separator    = "\n",
+         Str :$separator2   = Str,
+         Bool :$unexpand    = True,
+         Regex :$word-break = rx{\s},
          *@texts) is export {
 
     my Str $tail = pop(@texts);
@@ -102,7 +94,7 @@ sub wrap(Str $para-indent,
         $old-pos = $pos;
 
         # Grab as many whole words as possible that'll fit in $current-line-content
-        if $text ~~ m:p($pos)/(\N ** {0..%current<content>}) (<$break>|\n+|$)/ {
+        if $text ~~ m:p($pos)/(\N ** {0..%current<content>}) (<$word-break>|\n+|$)/ {
 
             $pos = $0.to + 1;
             $remainder = $1.Str;
@@ -126,7 +118,7 @@ sub wrap(Str $para-indent,
 
             # Grab up to the next word-break, line-break or end of text regardless of length
             when 'overflow' {
-                if $text ~~ m:p($pos)/(\N*?) (<$break>|\n+|$)/ {
+                if $text ~~ m:p($pos)/(\N*?) (<$word-break>|\n+|$)/ {
                     $pos = $0.to;
                     $remainder = $1.Str;
                     $out ~= unexpand-if($output-delimiter ~ %current<indent> ~ $0);
@@ -191,8 +183,7 @@ sub fill(Str $para-indent,
 =head1 OPTIONS
 
 Text::Wrap has a number of named parameters that can be passed to C<wrap()> or C<fill()>. The
-defaults for these are set in a number of package-global vars, but these only exist for
-backwards-compatibility with Perl 5; after a transition period we're removing them.
+defaults are intended to be reasonably sane, and compatible with the Perl 5 version of this module.
 
 =begin item
 C<:$columns> (default: C<76>)
@@ -204,12 +195,12 @@ than a line's indent + 1 character of text, a warning is issued and this value i
 =end item
 
 =begin item
-C<:$break> (default: C<rx/\s/>)
+C<:$word-break> (default: C<rx{\s}>)
 
 This defines the logical word separator. Set this to any valid regex, such as e.g. C<rx/\s|':'/> to
 break before spaces/colons or C<rx/\s|"'"/> to break before spaces/apostrophes. The default is
 simply to split on whitespace. (This means, among other things, that trailing punctuation such as
-full stops or commas stay with the word they are "attached" to.) Setting C<$break> to a regular
+full stops or commas stay with the word they are "attached" to.) Setting C<$word-break> to a regular
 expression that doesn't eat any characters (perhaps just a forward look-ahead assertion) will likely
 cause bad things to happen.
 =end item
