@@ -29,7 +29,7 @@ Text::Wrap provides two functions for wrapping text:
 
 C<wrap()> is a very simple paragraph formatter. It formats a single paragraph at a time by breaking
 lines at word boundaries. Indentation is controlled for the first line and all subsequent lines
-independently, via C<$para-indent> and C<$body-indent>.
+independently, via C<$lead-indent> and C<$body-indent>.
 
 C<fill()> is a simple multi-paragraph formatter. It breaks text into paragraphs on blank-line
 boundaries, each paragraph is passed to C<wrap()> and the result is joined back together.
@@ -40,7 +40,7 @@ Both C<wrap()> and C<fill()> return a single string.
 
 enum Overflow <break keep error>;
 
-sub wrap(Str $para-indent,
+sub wrap(Str $lead-indent,
          Str $body-indent,
          Int :$tabstop      = 8,
          Int :$columns      = 76,
@@ -51,37 +51,13 @@ sub wrap(Str $para-indent,
          Regex :$word-break = rx{\s},
          *@texts) is export {
 
-    my Str $tail = pop(@texts);
-    my Str $text = expand(:$tabstop, @texts.map({ /\s+$/ ?? $_ !! $_ ~ ' ' }).join ~ $tail);
+    my Str $text = expand(:$tabstop, trailing-space-join(@texts));
 
-    my %first-line = margin => expand(:$tabstop, $para-indent).chars;
-    my %body-line = margin => expand(:$tabstop, $body-indent).chars;
-
-    # If either margin is larger than $columns, emit a warning
-    # XXX niecza workaround: square brackets get the entire list all at once
-    my $content-width = [max] $columns, ([max] %first-line<margin>, %body-line<margin>);
-    if $columns < $content-width {
-        warn "Increasing column width from $columns to $content-width to contain requested indent";
-    }
-
-    # The first line is allowed to have zero characters if the indent consumes all available space,
-    # in which case text starts on the next line instead.
-    %first-line<content> = [max] 0, $content-width - %first-line<margin>;
-    %body-line<content> = [max] 1, $content-width - %body-line<margin>;
-
-    %first-line<width> = [+] %first-line<margin content>;
-    %body-line<width> = [+] %body-line<margin content>;
-
-    # 1 character is reserved for "\n", except if it would leave no space for text otherwise.
-    if %first-line<content> > 0 and %body-line<content> > 1 {
-        --%first-line<content>;
-        --%body-line<content>;
-    }
-
+    my %sizes = compute-sizes(:$lead-indent, :$body-indent, :$tabstop, :$columns);
     my %current = (
         first-line => True,
-        content => %first-line<content>,
-        indent => $para-indent,
+        content => %sizes<lead>,
+        indent => $lead-indent,
     );
 
     my Str $out = ''; # Output buffer
@@ -131,25 +107,26 @@ sub wrap(Str $para-indent,
 
             # Throw an exception if asked to do so
             when 'die' {
-                die "Couldn't wrap text to requested text width '$content-width'";
+                die "Couldn't wrap text to requested text width '%sizes<wrap-to>'";
             }
         }
 
-        if $content-width < 2 {
+        if %sizes<wrap-to> < 2 {
             # attempt to recover by expanding it
-            warn "Failed to wrap with text width set to '$content-width', retrying with 2";
-            return wrap($para-indent, $body-indent, :columns(2), @texts);
+            warn "Could not wrap text to text width '%sizes<wrap-to>', retrying with 2";
+            return wrap($lead-indent, $body-indent, :columns(2), @texts);
         }
         else {
             # If we get here, something went wrong
-            die "Couldn't wrap text to text width '$content-width' and unable to recover";
+            die "Could not wrap text to text width '%sizes<wrap-to>' and unable to recover";
         }
 
+        # FIXME: neither niecza nor rakudo support NEXT. Rewrite this to not need it
         NEXT {
             # Replace this after the first line is done
             %current = (
                 first-line => False,
-                content => %body-line<content>,
+                content => %sizes<body>,
                 indent => $body-indent,
             ) if %current<first-line>;
 
@@ -163,7 +140,7 @@ sub wrap(Str $para-indent,
     return $out ~ $remainder;
 }
 
-sub fill(Str $para-indent,
+sub fill(Str $lead-indent,
          Str $body-indent,
          *@raw,
          *%wrap-opts) is export {
@@ -171,9 +148,51 @@ sub fill(Str $para-indent,
     @raw.join("\n")\
         .split(/\n\s+/)\
         .map({
-            wrap($para-indent, $body-indent, $^paragraph.split(/\s+/).join(' '), %wrap-opts)
+            wrap($lead-indent, $body-indent, $^paragraph.split(/\s+/).join(' '), %wrap-opts)
         })\
-        .join($para-indent eq $body-indent ?? "\n\n" !! "\n");
+        .join($lead-indent eq $body-indent ?? "\n\n" !! "\n");
+}
+
+#= Joins an array of strings with space between, preferring to use existing trailing spaces.
+sub trailing-space-join(*@texts) {
+    my Str $tail = pop(@texts);
+    return @texts.map({ /\s+$/ ?? $_ !! $_ ~ q{ } }).join ~ $tail;
+}
+
+sub compute-sizes(:$lead-indent, :$body-indent, :$tabstop, :$columns) {
+    # The first line is allowed to have zero characters if the indent consumes all available space,
+    # in which case text starts on the next line instead.
+    my $lead = {
+        margin      => expand(:$tabstop, $lead-indent).chars,
+        min-width   => 0
+    };
+    my $body = {
+        margin      => expand(:$tabstop, $body-indent).chars,
+        min-width   => 1
+    };
+
+    # If either margin is larger than $columns, emit a warning
+    # XXX niecza workaround: square brackets get the entire list all at once
+    my $content-width = [max] $columns, ([max] $lead<margin>, $body<margin>);
+    if $columns < $content-width {
+        warn "Increasing column width from $columns to $content-width to contain requested indent";
+    }
+
+    for $lead, $body -> $_ {
+        $_<content> = [max] $_<min-width>, $content-width - $_<margin>;
+    };
+
+    # 1 character is reserved for "\n", except if it would leave no space for text otherwise.
+    if $lead<content> > $lead<min-width> and $body<content> > $body<min-width> {
+        --$lead<content>;
+        --$body<content>;
+    }
+
+    return {
+        wrap-to => $content-width,
+        lead    => $lead<content>,
+        body    => $body<content>,
+    }
 }
 
 =begin pod
