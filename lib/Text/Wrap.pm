@@ -54,29 +54,26 @@ sub wrap(Str $lead-indent,
     my Str $text = expand(:$tabstop, trailing-space-join(@texts));
 
     my %sizes = compute-sizes(:$lead-indent, :$body-indent, :$tabstop, :$columns);
-    my %current = (
-        first-line => True,
-        content => %sizes<lead>,
-        indent => $lead-indent,
-    );
 
-    my Str $out = ''; # Output buffer
-    my Str $output-delimiter = ''; # Usually \n
-    my Str $remainder = ''; # Buffer to catch trailing text
-    my Numeric $pos = 0; # Input regex cursor
-    my Numeric $old-pos = -1;
+    my Str $out                 = '';   # Output buffer
+    my Str $output-delimiter    = '';   # Usually \n
+    my Str $remainder           = '';   # Buffer to catch trailing text
+    my Bool $first-line         = True; # Flag to say whether we're doing first-line width or not
+    my Numeric $pos             = 0;    # Input regex cursor
 
     sub unexpand-if { $unexpand ?? unexpand(:$tabstop, $^a) !! $^a };
 
     while $pos <= $text.chars and $text !~~ m:p($pos)/\s*$/ {
-        $old-pos = $pos;
+        my $text-width  = $first-line ?? %sizes<lead> !! %sizes<body>;
+        my $indent      = $first-line ?? $lead-indent !! $body-indent;
+        $first-line = False;
 
-        # Grab as many whole words as possible that'll fit in $current-line-content
-        if $text ~~ m:p($pos)/(\N ** {0..%current<content>}) (<$word-break>|\n+|$)/ {
+        # Grab as many whole words as possible that'll fit in current line width
+        if $text ~~ m:p($pos)/(\N ** {0..$text-width}) (<$word-break>|\n+|$)/ {
 
             $pos = $0.to + 1;
             $remainder = $1.Str;
-            $out ~= unexpand-if($output-delimiter ~ %current<indent> ~ $0);
+            $out ~= unexpand-if($output-delimiter ~ $indent ~ $0);
 
             next;
         }
@@ -85,10 +82,10 @@ sub wrap(Str $lead-indent,
         given $long-lines {
             # Hard-wrap at the specified width
             when 'wrap' {
-                if $text ~~ m:p($pos)/(\N ** {0..%current<content>})/ {
+                if $text ~~ m:p($pos)/(\N ** {0..$text-width})/ {
                     $pos = $/.to;
                     $remainder = ($separator2 or $separator);
-                    $out ~= unexpand-if($output-delimiter ~ %current<indent> ~ $0);
+                    $out ~= unexpand-if($output-delimiter ~ $indent ~ $0);
 
                     next;
                 }
@@ -99,7 +96,7 @@ sub wrap(Str $lead-indent,
                 if $text ~~ m:p($pos)/(\N*?) (<$word-break>|\n+|$)/ {
                     $pos = $0.to;
                     $remainder = $1.Str;
-                    $out ~= unexpand-if($output-delimiter ~ %current<indent> ~ $0);
+                    $out ~= unexpand-if($output-delimiter ~ $indent ~ $0);
 
                     next;
                 }
@@ -123,13 +120,6 @@ sub wrap(Str $lead-indent,
 
         # FIXME: neither niecza nor rakudo support NEXT. Rewrite this to not need it
         NEXT {
-            # Replace this after the first line is done
-            %current = (
-                first-line => False,
-                content => %sizes<body>,
-                indent => $body-indent,
-            ) if %current<first-line>;
-
             $output-delimiter =
                 $separator2 ?? $remainder eq "\n" ?? $remainder
                                                   !! $separator2
