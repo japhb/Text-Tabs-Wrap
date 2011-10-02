@@ -10,11 +10,11 @@ my @input = (
 
 plan +@input;
 
-my $break = rx{<?after <[,.]>>};
+my $word-break = rx{<?after <[,.]>>};
 
 for @input.kv -> $num, $str {
     # fails in rakudo; "after" NYI
     lives_ok {
-        wrap('', '', $str, :huge<overflow>, :columns(9), :$break)
+        wrap('', '', $str, :huge<overflow>, :columns(9), :$word-break)
     }, "Test {1+$num} ran"
 }

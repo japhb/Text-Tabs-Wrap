@@ -3,7 +3,7 @@ use v6;
 use Test;
 use Text::Wrap;
 
-# This test re-wraps a short string repeatedly with different settings for $break - the output
+# This test re-wraps a short string repeatedly with different settings for $word-break - the output
 # should be the same each time
 # FIXME: Is this from RT#37000? There's an external link there that seems to be dead, but other than
 # that I can't find any mention of this there
@@ -20,10 +20,10 @@ plan +@steps;
 
 my Str $current = $input;
 
-for @steps.kv -> $number, $break {
-    $current = wrap('', '', :$break, $current);
+for @steps.kv -> $number, $word-break {
+    $current = wrap('', '', :$word-break, $current);
 
     is  $current,
         $output,
-        "Short line \$break test ({1+$number} of {+@steps})";
+        "Short line \$word-break test ({1+$number} of {+@steps})";
 }
