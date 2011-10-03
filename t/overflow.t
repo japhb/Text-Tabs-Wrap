@@ -10,7 +10,7 @@ my Str $input = <
 >.join('_');
 
 my Str $output = "zzz$input";
-my &wrapper = &wrap.assuming('zzz', 'yyy', $input, :huge<overflow>);
+my &wrapper = &wrap.assuming('zzz', 'yyy', $input, :long-lines<keep>);
 
 is  &wrapper(),
     $output,

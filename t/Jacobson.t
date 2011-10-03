@@ -15,6 +15,6 @@ my $word-break = rx{<?after <[,.]>>};
 for @input.kv -> $num, $str {
     # fails in rakudo; "after" NYI
     lives_ok {
-        wrap('', '', $str, :huge<overflow>, :columns(9), :$word-break)
+        wrap('', '', $str, :long-lines<keep>, :columns(9), :$word-break)
     }, "Test {1+$num} ran"
 }

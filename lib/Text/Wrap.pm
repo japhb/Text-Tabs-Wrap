@@ -18,9 +18,9 @@ Text::Wrap -- line wrapping to form simple paragraphs
     $lines = wrap($initial_tab, $subsequent_tab, @text);
     @paragraphs = fill($initial_tab, $subsequent_tab, @text);
 
-    $Text::Wrap::huge = 'wrap';
-    $Text::Wrap::columns = %*ENV<COLUMNS> // 80;
-    print wrap('', '', @text);  # Format text for terminal output
+    $long-lines = 'break';
+    $columns = %*ENV<COLUMNS> // 80;
+    print wrap('', '', @text, :$long-lines, :$columns);  # Format text for terminal output
 =end code
 
 =head1 DESCRIPTION
@@ -38,17 +38,17 @@ Both C<wrap()> and C<fill()> return a single string.
 
 =end pod
 
-enum Overflow <break keep error>;
+subset LineWrap of Str where any(<break keep error>);
 
 sub wrap(Str $lead-indent,
          Str $body-indent,
-         Int :$tabstop          = 8,
-         Int :$columns          = 76,
-         Str :$separator        = "\n",
-         Str :$separator2       = Str,
-         Bool :$unexpand        = True,
-         Regex :$word-break     = rx{\s},
-         Overflow :$long-lines  = Overflow::break,
+         Int :$tabstop      = 8,
+         Int :$columns      = 76,
+         Str :$separator    = "\n",
+         Str :$separator2   = Str,
+         Bool :$unexpand    = True,
+         LineWrap :$long-lines  = 'break',
+         Regex    :$word-break  = rx{\s},
          *@texts) is export {
 
     my Str $text = expand(:$tabstop, trailing-space-join(@texts));
@@ -81,7 +81,7 @@ sub wrap(Str $lead-indent,
         # If that fails, the behaviour depends on the setting of $long-lines:
         given $long-lines {
             # Hard-wrap at the specified width
-            when 'wrap' {
+            when 'break' {
                 if $text ~~ m:p($pos)/(\N ** {0..$text-width})/ {
                     $pos = $/.to;
                     $remainder = ($separator2 or $separator);
@@ -92,7 +92,7 @@ sub wrap(Str $lead-indent,
             }
 
             # Grab up to the next word-break, line-break or end of text regardless of length
-            when 'overflow' {
+            when 'keep' {
                 if $text ~~ m:p($pos)/(\N*?) (<$word-break>|\n+|$)/ {
                     $pos = $0.to;
                     $remainder = $1.Str;
@@ -103,7 +103,7 @@ sub wrap(Str $lead-indent,
             }
 
             # Throw an exception if asked to do so
-            when 'die' {
+            when 'error' {
                 die "Couldn't wrap text to requested text width '%sizes<wrap-to>'";
             }
         }
@@ -233,18 +233,18 @@ the input are preserved.
 =end item
 
 =begin item
-C<:$long-lines> (default: C<Overflow::break>)
+C<:$long-lines> (default: C<'break'>)
 
 This defines the behaviour when encountering an oversized "word" (anything that can't be normally
 broken before C<$columns> characters on the line). 3 values are accepted:
 
-=defn C<Overflow::break>
+=defn C<'break'>
 C<wrap()> inserts a line break in the word at column C<$columns>.
 
-=defn C<Overflow::keep>
+=defn C<'keep'>
 Words longer than C<$columns> are put on a line by themselves, but otherwise left unwrapped.
 
-=defn C<Overflow::error>
+=defn C<'error'>
 C<wrap()> dies upon finding a word it can't fit into the space allocated.
 =end item
 
