@@ -55,18 +55,27 @@ sub wrap(Str $lead-indent,
 
     my %sizes = compute-sizes(:$lead-indent, :$body-indent, :$tabstop, :$columns);
 
+    my Int $lines-done          = 0;    # Flag to control first-line/rest-of-text stuff
+    my Int $text-width          = %sizes<lead>; # Target width of current line (minus indent)
+    my Str $indent              = $lead-indent; # String to prefix current line with
     my Str $out                 = '';   # Output buffer
     my Str $output-delimiter    = '';   # Usually \n
     my Str $remainder           = '';   # Buffer to catch trailing text
-    my Bool $first-line         = True; # Flag to say whether we're doing first-line width or not
     my Numeric $pos             = 0;    # Input regex cursor
 
     sub unexpand-if { $unexpand ?? unexpand(:$tabstop, $^a) !! $^a };
 
     while $pos <= $text.chars and $text !~~ m:p($pos)/\s*$/ {
-        my $text-width  = $first-line ?? %sizes<lead> !! %sizes<body>;
-        my $indent      = $first-line ?? $lead-indent !! $body-indent;
-        $first-line = False;
+        if $lines-done == 1 {
+            $text-width = %sizes<body>;
+            $indent = $body-indent;
+            $output-delimiter =
+                $separator2 ?? $remainder eq "\n" ?? $remainder
+                                                  !! $separator2
+                            !! $separator;
+        }
+
+        $lines-done++;
 
         # Grab as many whole words as possible that'll fit in current line width
         if $text ~~ m:p($pos)/(\N ** {0..$text-width}) (<$word-break>|\n+|$)/ {
@@ -117,14 +126,6 @@ sub wrap(Str $lead-indent,
             # If we get here, something went wrong
             die "Could not wrap text to text width '%sizes<wrap-to>' and unable to recover";
         }
-
-        # FIXME: neither niecza nor rakudo support NEXT. Rewrite this to not need it
-        NEXT {
-            $output-delimiter =
-                $separator2 ?? $remainder eq "\n" ?? $remainder
-                                                  !! $separator2
-                            !! $separator;
-        }
     }
 
     return $out ~ $remainder;
@@ -143,7 +144,7 @@ sub fill(Str $lead-indent,
         .join($lead-indent eq $body-indent ?? "\n\n" !! "\n");
 }
 
-#= Joins an array of strings with space between, preferring to use existing trailing spaces.
+# Joins an array of strings with space between, preferring to use existing trailing spaces.
 sub trailing-space-join(*@texts) {
     my Str $tail = pop(@texts);
     return @texts.map({ /\s+$/ ?? $_ !! $_ ~ q{ } }).join ~ $tail;
