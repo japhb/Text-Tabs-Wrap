@@ -42,13 +42,13 @@ enum Overflow <break keep error>;
 
 sub wrap(Str $lead-indent,
          Str $body-indent,
-         Int :$tabstop      = 8,
-         Int :$columns      = 76,
-         Str :$long-lines   = Overflow::break,
-         Str :$separator    = "\n",
-         Str :$separator2   = Str,
-         Bool :$unexpand    = True,
-         Regex :$word-break = rx{\s},
+         Int :$tabstop          = 8,
+         Int :$columns          = 76,
+         Str :$separator        = "\n",
+         Str :$separator2       = Str,
+         Bool :$unexpand        = True,
+         Regex :$word-break     = rx{\s},
+         Overflow :$long-lines  = Overflow::break,
          *@texts) is export {
 
     my Str $text = expand(:$tabstop, trailing-space-join(@texts));
