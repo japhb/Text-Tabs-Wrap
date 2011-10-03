@@ -50,10 +50,11 @@ sub unexpand($text, :$tabstop = 8) returns Str is export {
         # into \t chars. We don't do that for the last bit because it might not be a full
         # $tabstop chars long.
         my $expanded = expand($^line);
-        my @chunks = ($expanded.substr($_, $tabstop) for 0, $tabstop ...^ * >= $expanded.chars);
+        my @chunks = (0, $tabstop ...^ * >= $expanded.chars).map({ $expanded.substr($_, $tabstop) });
         my $tail = pop(@chunks) // '';
+
         @chunks».subst(/\s\s+$/, "\t").join
-              ~ ($tail eq ' ' x $tabstop ?? "\t" !! $tail);
+            ~ ($tail eq ' ' x $tabstop ?? "\t" !! $tail);
     }).join("\n");
 }
 
