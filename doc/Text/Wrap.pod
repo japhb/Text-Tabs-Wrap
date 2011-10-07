@@ -26,7 +26,8 @@ Text::Wrap provides two functions for wrapping text:
 
 C<wrap()> is a very simple paragraph formatter. It formats a single paragraph at a time by breaking
 lines at word boundaries. Indentation is controlled for the first line and all subsequent lines
-independently, via C<$lead-indent> and C<$body-indent>.
+independently, via C<$lead-indent> and C<$body-indent>. The exact algorithm is detailed in
+C<doc/wrap.md>.
 
 C<fill()> is a simple multi-paragraph formatter. It breaks text into paragraphs on blank-line
 boundaries, each paragraph is passed to C<wrap()> and the result is joined back together.

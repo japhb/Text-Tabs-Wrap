@@ -1,0 +1,44 @@
+The Text::Wrap algorithm
+========================
+
+The original Text::Wrap algorithm is pretty convoluted, but here goes:
+
+1. Input (a list of strings) is normalised into a single string by concatenating each array element
+   with space between. Trailing whitespace from the earlier element is used if present, otherwise a
+   single ASCII space is inserted.
+2. This string is then run through `expand()` to change hard tabs into sequences of
+   spaces. This is the end of the easy bit.
+3. Compute the bounding box of the output text from the size of the leading-line and text body
+   indents, the width of a tabstop (we have to tab-expand the indent strings too!), and the
+   requested output width. Reserve minimum one character per body line for actual text, but zero on
+   the first line (i.e. the indent is allowed to occupy the entire line). If there's room on all
+   lines to do so, steal one character from the available text width for the newline character
+   (rationale: this was originally designed for good output on terminals, which are a whole other
+   story...)
+4. Start of main loop. Initialise the *current line context* to leading-line, `$position` to 0, and
+   `$line-separator` and `$remainder` to empty strings. The _line regex_ is as follows:
+
+    * If `$overflow` is "break", an *input line* is defined as non-newline characters up to a
+      maximum of the text width of the current line context, followed by a *delimiter*, defined as
+      `/<$word-break>|\n|$/`. When the input line matches the maximum length allowed, the
+      delimiter is optional.
+    * If `$overflow` is "keep", the rules are the same as above but no length limit is imposed on
+      the input line.
+    * If `$overflow` is "error", rules are the same as for "break" except the delimiter is not
+      optional, and a failed match throws an exception.
+
+5. Try to grab as many non-newline characters as possible starting at character offset `$pos`, as
+   defined by the line regex above.
+6. For a failed match, first check if `$overflow` is "error" and throw an exception immediately if
+   so. If the function is trying to wrap to less than 2 columns, re-invoke it with 2 columns.
+   Otherwise, throw an exception (reaching this part may be a bug).
+7. Append to the output a `$line-separator`, the indent string from the current line context, and
+   the grabbed string. Set `$pos` to immediately after the end of the match.
+8. Set `$remainder` to the first defined value of: delimiter, `$separator2` or `$separator`.
+9. Set the value of `$line-separator` between this and the next line as follows:
+
+    * If `$remainder` is a newline and `$separator2` is defined, use the newline.
+    * If `$separator2` is defined, use `$separator2`.
+    * Use `$separator` as a fallback.
+10. End of main loop. If we reach the end of the string here, append `$remainder` to the output
+    string and return the result.
