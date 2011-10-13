@@ -11,7 +11,7 @@ sub wrap(Str $lead-indent,
          Str :$separator2   = Str,
          Bool :$unexpand    = True,
          LineWrap :$long-lines  = 'break',
-         Regex    :$word-break  = rx{\s},
+         Regex    :$word-break  = rx/\s/,
          *@texts) is export {
 
     my Str $text = expand(:$tabstop, trailing-space-join(@texts));
@@ -26,9 +26,36 @@ sub wrap(Str $lead-indent,
     my Str $remainder           = '';   # Buffer to catch trailing text
     my Numeric $pos             = 0;    # Input regex cursor
 
+    my Regex $line-break = rx/ <$word-break>|\n|$ /;
+    my Regex $line-regex = do given $long-lines {
+        when 'break' { rx/ (\N ** {0..$text-width - 1}) (<$line-break>)
+                         | (\N ** {$text-width}) (<$line-break>)? / }
+        when 'keep'  { rx/ (\N*?) (<$line-break>) / }
+        when 'error' { rx/ (\N ** {0..$text-width - 1}) (<$line-break>) / }
+    };
+
     sub unexpand-if { $unexpand ?? unexpand(:$tabstop, $^a) !! $^a };
 
     while $pos <= $text.chars and $text !~~ m:p($pos)/\s*$/ {
+        # Reminder to self: .match only returns a match, it doesn't implicitly set $/
+        my $line = $text.match($line-regex, :$pos);
+        if $line {
+            $out ~= unexpand-if($output-delimiter ~ $indent ~ $line[0]);
+            $pos = $line.to + 1;
+            $remainder = $line[1] ?? $line[1].Str !! $separator2 // $separator;
+        }
+        elsif $long-lines eq 'error' {
+            die "Couldn't wrap text to requested text width '%sizes<wrap-to>'";
+        }
+        elsif %sizes<wrap-to> < 2 {
+            warn "Could not wrap text to text width '%sizes<wrap-to>', retrying with 2";
+            return wrap($lead-indent, $body-indent, :columns(2), @texts);
+        }
+        else {
+            # If we get here, something went wrong
+            die "Could not wrap text to text width '%sizes<wrap-to>' and unable to recover";
+        }
+
         if $lines-done == 1 {
             $text-width = %sizes<body>;
             $indent = $body-indent;
@@ -39,56 +66,6 @@ sub wrap(Str $lead-indent,
         }
 
         $lines-done++;
-
-        # Grab as many whole words as possible that'll fit in current line width
-        if $text ~~ m:p($pos)/(\N ** {0..$text-width}) (<$word-break>|\n+|$)/ {
-
-            $pos = $0.to + 1;
-            $remainder = $1.Str;
-            $out ~= unexpand-if($output-delimiter ~ $indent ~ $0);
-
-            next;
-        }
-
-        # If that fails, the behaviour depends on the setting of $long-lines:
-        given $long-lines {
-            # Hard-wrap at the specified width
-            when 'break' {
-                if $text ~~ m:p($pos)/(\N ** {0..$text-width})/ {
-                    $pos = $/.to;
-                    $remainder = ($separator2 or $separator);
-                    $out ~= unexpand-if($output-delimiter ~ $indent ~ $0);
-
-                    next;
-                }
-            }
-
-            # Grab up to the next word-break, line-break or end of text regardless of length
-            when 'keep' {
-                if $text ~~ m:p($pos)/(\N*?) (<$word-break>|\n+|$)/ {
-                    $pos = $0.to;
-                    $remainder = $1.Str;
-                    $out ~= unexpand-if($output-delimiter ~ $indent ~ $0);
-
-                    next;
-                }
-            }
-
-            # Throw an exception if asked to do so
-            when 'error' {
-                die "Couldn't wrap text to requested text width '%sizes<wrap-to>'";
-            }
-        }
-
-        if %sizes<wrap-to> < 2 {
-            # attempt to recover by expanding it
-            warn "Could not wrap text to text width '%sizes<wrap-to>', retrying with 2";
-            return wrap($lead-indent, $body-indent, :columns(2), @texts);
-        }
-        else {
-            # If we get here, something went wrong
-            die "Could not wrap text to text width '%sizes<wrap-to>' and unable to recover";
-        }
     }
 
     return $out ~ $remainder;
