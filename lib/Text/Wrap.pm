@@ -14,9 +14,8 @@ sub wrap(Str $lead-indent,
          Regex    :$word-break  = rx/\s/,
          *@texts) is export {
 
-    my Str $text = expand(:$tabstop, trailing-space-join(@texts));
-
     my %sizes = compute-sizes(:$lead-indent, :$body-indent, :$tabstop, :$columns);
+    my Str $text = expand(:$tabstop, trailing-space-join(@texts));
 
     my Int $lines-done          = 0;    # Flag to control first-line/rest-of-text stuff
     my Int $text-width          = %sizes<lead>; # Target width of current line (minus indent)
@@ -28,6 +27,7 @@ sub wrap(Str $lead-indent,
 
     my Regex $line-break = rx/ <$word-break>|\n|$ /;
     my Regex $line-regex = do given $long-lines {
+        # TODO: Rakudo is broken on all of these, doesn't support /x ** {y}/ (2011-10-20)
         when 'break' { rx/ (\N ** {0..$text-width - 1}) (<$line-break>)
                          | (\N ** {$text-width}) (<$line-break>)? / }
         when 'keep'  { rx/ (\N*?) (<$line-break>) / }
