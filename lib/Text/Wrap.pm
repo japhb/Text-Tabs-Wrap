@@ -25,13 +25,13 @@ sub wrap(Str $lead-indent,
     my Str $remainder           = '';   # Buffer to catch trailing text
     my Numeric $pos             = 0;    # Input regex cursor
 
-    my Regex $line-break = rx/ <$word-break>|\n|$ /;
+    my Regex $line-break = rx/ $word-break|\n|$ /;
     my Regex $line-regex = do given $long-lines {
         # TODO: Rakudo is broken on all of these, doesn't support /x ** {y}/ (2011-10-20)
-        when 'break' { rx/ (\N ** {0..$text-width - 1}) (<$line-break>)
-                         | (\N ** {$text-width}) (<$line-break>)? / }
-        when 'keep'  { rx/ (\N*?) (<$line-break>) / }
-        when 'error' { rx/ (\N ** {0..$text-width - 1}) (<$line-break>) / }
+        when 'break' { rx/ (\N ** {0..$text-width - 1}) ($line-break)
+                         | (\N ** {$text-width}) ($line-break)? / }
+        when 'keep'  { rx/ (\N*?) ($line-break) / }
+        when 'error' { rx/ (\N ** {0..$text-width - 1}) ($line-break) / }
     };
 
     sub unexpand-if { $unexpand ?? unexpand(:$tabstop, $^a) !! $^a };
@@ -87,7 +87,7 @@ sub fill(Str $lead-indent,
 # Joins an array of strings with space between, preferring to use existing trailing spaces.
 sub trailing-space-join(*@texts) {
     my Str $tail = pop(@texts);
-    return @texts.map({ /\s+$/ ?? $_ !! $_ ~ q{ } }).join ~ $tail;
+    return @texts.map({ /\s$/ ?? $_ !! $_ ~ q{ } }).join ~ $tail;
 }
 
 sub compute-sizes(:$lead-indent, :$body-indent, :$tabstop, :$columns) {
