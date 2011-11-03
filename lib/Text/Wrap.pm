@@ -11,8 +11,10 @@ sub wrap(Str $lead-indent,
          Str :$separator2   = Str,
          Bool :$unexpand    = True,
          LineWrap :$long-lines  = 'break',
-         Regex    :$word-break  = rx/\s/,
+         Regex    :$word-break is copy,#  = rx/\s/,
          *@texts) is export {
+    # TODO: This is a Niecza issue 19 workaround
+    $word-break //= rx/\s/;
 
     my %sizes = compute-sizes(:$lead-indent, :$body-indent, :$tabstop, :$columns);
     my Str $text = expand(:$tabstop, trailing-space-join(@texts));
@@ -27,11 +29,17 @@ sub wrap(Str $lead-indent,
 
     my Regex $line-break = rx/ $word-break|\n|$ /;
     my Regex $line-regex = do given $long-lines {
-        # TODO: Rakudo is broken on all of these, doesn't support /x ** {y}/ (2011-10-20)
-        when 'break' { rx/ (\N ** {0..$text-width - 1}) ($line-break)
-                         | (\N ** {$text-width}) ($line-break)? / }
+        # TODO: Rakudo doesn't support code ranges, but I've left them in anyway as the workaround
+        # (interpolated string code) doesn't work at all.
+        my Regex $variable-text = rx/ \N ** {0 .. $text-width.pred} /;
+        my Regex $exact-text = rx/ \N ** {$text-width} /;
+
+        my Regex $breakable-string = rx/ ($variable-text) ($line-break) /;
+        my Regex $unbreakable-string = rx/ ($exact-text) ($line-break)? /;
+
+        when 'break' { rx/ $breakable-string | $unbreakable-string / }
         when 'keep'  { rx/ (\N*?) ($line-break) / }
-        when 'error' { rx/ (\N ** {0..$text-width - 1}) ($line-break) / }
+        when 'error' { $breakable-string }
     };
 
     sub unexpand-if { $unexpand ?? unexpand(:$tabstop, $^a) !! $^a };
