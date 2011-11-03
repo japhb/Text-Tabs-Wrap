@@ -13,7 +13,7 @@ sub wrap(Str $lead-indent,
          LineWrap :$long-lines  = 'break',
          Regex    :$word-break is copy,#  = rx/\s/,
          *@texts) is export {
-    # TODO: This is a Niecza issue 19 workaround
+    # TODO: Niecza issue 19
     $word-break //= rx/\s/;
 
     my %sizes = compute-sizes(:$lead-indent, :$body-indent, :$tabstop, :$columns);
@@ -30,7 +30,8 @@ sub wrap(Str $lead-indent,
     my Regex $line-break = rx/ $word-break|\n|$ /;
     my Regex $line-regex = do given $long-lines {
         # TODO: Rakudo doesn't support code ranges, but I've left them in anyway as the workaround
-        # (interpolated string code) doesn't work at all.
+        #       (interpolated string code) doesn't work at all.
+        #       Niecza issue 77
         my Regex $variable-text = rx/ \N ** {0 .. $text-width.pred} /;
         my Regex $exact-text = rx/ \N ** {$text-width} /;
 
