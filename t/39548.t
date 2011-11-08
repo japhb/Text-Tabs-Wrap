@@ -17,4 +17,4 @@ lives_ok {
     is  wrap($leading-indent, $paragraph-indent, $main-text),
         " (Karl-Bonhoeffer-Nervenklinik zwischen Hermann-Piper-Str. und U-Bahnhof) (\n"
       ~ " 5079,19635 5124,19634 5228,19320 5246,19244)\n";
-}, 'First test ran' or flunk('First test died');
+}, 'First test ran' or flunk('First test died, can not test its output');

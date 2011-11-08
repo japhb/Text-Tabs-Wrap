@@ -11,10 +11,9 @@ sub wrap(Str $lead-indent,
          Str :$separator2   = Str,
          Bool :$unexpand    = True,
          LineWrap :$long-lines  = 'break',
-         Regex    :$word-break is copy,#  = rx/\s/,
+         Str      :$word-break  = '\s',
          *@texts) is export {
-    # TODO: Niecza issue 19
-    $word-break //= rx/\s/;
+         #Regex    :$word-break  = rx/\s/,
 
     my %sizes = compute-sizes(:$lead-indent, :$body-indent, :$tabstop, :$columns);
     my Str $text = expand(:$tabstop, trailing-space-join(@texts));
@@ -27,20 +26,30 @@ sub wrap(Str $lead-indent,
     my Str $remainder           = '';   # Buffer to catch trailing text
     my Numeric $pos             = 0;    # Input regex cursor
 
-    my Regex $line-break = rx/ $word-break|\n|$ /;
-    my Regex $line-regex = do given $long-lines {
-        # TODO: Rakudo doesn't support code ranges, but I've left them in anyway as the workaround
-        #       (interpolated string code) doesn't work at all.
-        #       Niecza issue 77
-        my Regex $variable-text = rx/ \N ** {0 .. $text-width.pred} /;
-        my Regex $exact-text = rx/ \N ** {$text-width} /;
+=begin pod
+Held up by: Rakudo - doesn't support code ranges, Niecza - issue 77, issue 19
 
-        my Regex $breakable-string = rx/ ($variable-text) ($line-break) /;
-        my Regex $unbreakable-string = rx/ ($exact-text) ($line-break)? /;
+    my Regex $line-regex = do given $long-lines {
+        my Regex $line-break = rx/ $word-break|\n|$ /;
+        my Regex $breakable-string = rx/ (\N ** {0..$text-width.pred}) ($line-break) /;
+        my Regex $unbreakable-string = rx/ (\N ** {$text-width}) ($line-break)? /;
 
         when 'break' { rx/ $breakable-string | $unbreakable-string / }
         when 'keep'  { rx/ (\N*?) ($line-break) / }
-        when 'error' { $breakable-string }
+        when 'error' { rx/ $breakable-string / }
+    };
+=end pod
+
+    my Regex $line-regex = eval do given $long-lines {
+        my Str $line-break = "{$word-break}|\\n|\$";
+
+        # FIXME Need to handle text-width == 0 correctly (leading indent eats whole line)
+        my Str $breakable-string = "(\\N ** 0..{$text-width.pred}) ({$line-break})";
+        my Str $unbreakable-string = "(\\N ** {$text-width}) ({$line-break})?";
+
+        when 'break' { "rx/ {$breakable-string} | {$unbreakable-string} /" }
+        when 'keep'  { "rx/ (\\N*?) ({$line-break}) /" }
+        when 'error' { "rx/ {$breakable-string} /" }
     };
 
     sub unexpand-if { $unexpand ?? unexpand(:$tabstop, $^a) !! $^a };

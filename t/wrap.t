@@ -10,7 +10,7 @@ TestFiles::run-tests(
         my @in = $in.lines;
         my @out = $out.lines;
 
-        is  wrap('   ', ' ', @in.join("\n"), word-break => rx{\s}),
+        is  wrap('   ', ' ', @in.join("\n"), word-break => '\s'),
             @out.join("\n"),
             "$filename - wrap.t";
     }

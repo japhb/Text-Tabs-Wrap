@@ -11,28 +11,22 @@ Unix `expand(1)` and `unexpand(1)` commands do: adding or removing tabs from a d
 Text::Wrap gives you `wrap` and `fill` functions. `wrap` will break up long lines; it doesn't join
 short lines together. `fill` reformats entire blocks of text, similar to vi's `gq` command.
 
-Current status (2011-08-15)
+Current status (2011-11-08)
 ---------------------------
 
-* Rakudo master: most tests pass apart from a few TODOs relying on NYI bits of regex.
-* Rakudo nom: dies on all tests, "method 'rxtype' not found" and missing `&dir`
-* Niecza: dies on all tests, "Regex modifier p not yet implemented" and missing `&dir`
+* `Text::Wrap` partially works using a horrible string-eval hack to get both Rakudo and Niecza to
+  work. Neither of them implement enough regex features to do this correctly yet.
+* `Text::Tabs` works in both Rakudo and Niecza.
 
-Building Text-Tabs-Wrap
------------------------
+Installing Text-Tabs-Wrap
+-------------------------
 
-We recommend using [Pies](https://github.com/tadzik/Pies), as it does all the work of module
-installation for you.
-
-If you prefer to do things manually instead, you can run the test suite like so:
-
-    PERL6LIB="lib" prove -e perl6
-    prove -e 'mono path/to/Niecza.exe -I lib'
+(TBD: figure out which module installers are usable)
 
 Credits
 -------
 
 [Takadonet](https://github.com/Takadonet) did the initial porting work from Perl 5 to 6, and
-[flussence](https://github.com/flussence) rewrote everything to look nicer.
+[flussence](https://github.com/flussence) has been maintaining it since then.
 
 The original Perl 5 code was created by [David Muir Sharnoff](http://search.cpan.org/~muir/).
