@@ -42,3 +42,17 @@ The original Text::Wrap algorithm is pretty convoluted, but here goes:
     * Use `$separator` as a fallback.
 10. End of main loop. If we reach the end of the string here, append `$remainder` to the output
     string and return the result.
+
+Notes
+-----
+
+The purpose of `$separator2` is as an optional "inserted line-break". It only gets inserted when
+`$remainder` isn't a newline, which leaves `$word-break` (i.e. horizontal whitespace) and
+end-of-text as the only alternatives.
+
+When `$separator2` isn't being used, `$separator` is used as the output line break no matter whether
+the input line needed rewrapping.
+
+`wrap()` has two main functionalities: the indentation of output, and text wrapping, which has to
+grab approriately-sized chunks of input given the constraints the indentation adds to the output
+line width. These constraints can be calculated ahead of the main loop.

@@ -56,8 +56,7 @@ Held up by: Rakudo - doesn't support code ranges, Niecza - issue 77, issue 19
 
     while $pos <= $text.chars and $text !~~ m:p($pos)/\s*$/ {
         # Reminder to self: .match only returns a match, it doesn't implicitly set $/
-        my $line = $text.match($line-regex, :$pos);
-        if $line {
+        if my $line = $text.match($line-regex, :$pos) {
             $out ~= unexpand-if($output-delimiter ~ $indent ~ $line[0]);
             $pos = $line.to + 1;
             $remainder = $line[1] ?? $line[1].Str !! $separator2 // $separator;
