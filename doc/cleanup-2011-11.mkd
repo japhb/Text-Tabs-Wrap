@@ -1,0 +1,10 @@
+API Cleanup Ideas (2011-11-18)
+==============================
+
+* Make the idea of `$separator2` overriding `$separator` go away entirely. Have one
+  `$output_separator` and a boolean `$replace_input_separator`
+* Add `$input_separator` instead of hardcoding to `\n`
+* Make `wrap()` take all parameters but the input, and return a subref thingy that can be called
+  repeatedly without recalculating widths each time. This would replace the helper function used for
+  that currently.
+* Write docs this time so the next guy doesn't have to spend weeks/months deciphering the algorithm
