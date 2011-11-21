@@ -3,6 +3,23 @@ use Text::Tabs;
 
 subset LineWrap of Str where any(<break keep error>);
 
+sub wrapper(Str :$lead-indent       = q{ } x 2,
+            Str :$body-indent       = q{},
+            Int :$tabstop           = 8,
+            Int :$columns           = 76,
+            LineWrap :$long-lines   = 'break',
+            Regex :$word-break      = rx/\s/,
+            Regex :$line-break      = rx/\n/,
+            Str :$output-break      = "\n",
+            Bool :$preserve-breaks  = True) is export {
+
+    my %sizes = compute-sizes(:$lead-indent, :$body-indent, :$tabstop, :$columns);
+
+    return sub ($text as Str) {
+        ...
+    }
+}
+
 sub wrap(Str $lead-indent,
          Str $body-indent,
          Int :$tabstop      = 8,
