@@ -1,6 +1,7 @@
 #!/usr/bin/env perl6
 use v6;
 use Test;
+use lib '.';
 use TestFiles;
 use Text::Tabs;
 
