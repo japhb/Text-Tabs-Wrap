@@ -1,11 +1,10 @@
 #!/usr/bin/env perl6
 use v6;
 use Test;
-use lib '.';
-use TestFiles;
+use Test::Corpus;
 use Text::Wrap;
 
-TestFiles::run-tests(
+Test::Corpus::run-tests(
     sub ($in, $out, $filename) {
         my @in = $in.lines;
         my @out = $out.lines;

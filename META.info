@@ -2,6 +2,6 @@
     "name"          : "Text-Tabs-Wrap",
     "version"       : "*",
     "description"   : "Simple line-wrapping and tab [un]expansion tools",
-    "depends"       : [],
+    "depends"       : ["Test-Corpus"],
     "source-url"    : "git://github.com/flussence/Text-Tabs-Wrap.git"
 }
