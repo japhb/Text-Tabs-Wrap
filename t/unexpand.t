@@ -4,6 +4,4 @@ use Test;
 use Test::Corpus;
 use Text::Tabs;
 
-Test::Corpus::run-tests(
-    Test::Corpus::default-test(&unexpand);
-);
+run-tests(simple-test(&unexpand));

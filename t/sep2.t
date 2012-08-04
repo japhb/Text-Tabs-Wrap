@@ -4,7 +4,7 @@ use Test;
 use Test::Corpus;
 use Text::Wrap;
 
-Test::Corpus::run-tests(
+run-tests(
     sub ($in, $out, $filename) {
         my Str $in-str = $in.slurp;
         my Str $out-str = $out.slurp;
