@@ -41,7 +41,7 @@ sub wrap(Str $lead-indent,
         $lines-done++;
 
         # Grab as many whole words as possible that'll fit in current line width
-        if $text ~~ m:p($pos)/(\N ** {0..$text-width}) (<$word-break>|\n+|$)/ {
+        if $text ~~ m:p($pos)/(\N*) <?{ $0.chars ~~ 0..$text-width}> (<$word-break>|\n+|$)/ {
 
             $pos = $0.to + 1;
             $remainder = $1.Str;
@@ -54,7 +54,7 @@ sub wrap(Str $lead-indent,
         given $long-lines {
             # Hard-wrap at the specified width
             when 'break' {
-                if $text ~~ m:p($pos)/(\N ** {0..$text-width})/ {
+                if $text ~~ m:p($pos)/(\N*) <?{ $0.chars ~~ 0..$text-width}>/ {
                     $pos = $/.to;
                     $remainder = ($separator2 or $separator);
                     $out ~= unexpand-if($output-delimiter ~ $indent ~ $0);
