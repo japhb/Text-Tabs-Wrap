@@ -2,10 +2,10 @@
 use v6;
 use Test;
 use lib '.';
-use TestFiles;
+use Test::Corpus;
 use Text::Wrap;
 
-TestFiles::run-tests(
+run-tests(
     sub ($in, $out, $filename) {
         my @in = $in.lines;
         my @out = $out.lines;
