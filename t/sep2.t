@@ -9,7 +9,7 @@ run-tests(
     sub ($in, $out, $filename) {
         my Str $in-str = $in.slurp;
         my Str $out-str = $out.slurp;
-        my &wrapper = &wrap.assuming('   ', ' ', :separator2('='));
+        my &wrapper = &wrap.assuming(q{ } x 3, q{ }, :separator2('='));
 
         is  &wrapper($in-str),
             $out-str,
@@ -17,7 +17,7 @@ run-tests(
 
         # append "\n" to all lines but the last
         my @in = $in-str.split(/\n/);
-        @in[0 ..^ @in-1] >>~=>> "\n";
+        @in[^@in.end] »~=» "\n";
 
         is  &wrapper(@in),
             $out-str,

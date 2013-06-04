@@ -10,5 +10,5 @@ plan 2;
 lives_ok {
     is  wrap('', '123', 'some text', :columns(4)),
         "some\n123t\n123e\n123x\n123t",
-        'Correct output';
+        'Wrapping works correctly with large indent string';
 }, 'First test ran' or flunk('First test died');

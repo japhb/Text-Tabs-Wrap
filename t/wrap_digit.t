@@ -10,7 +10,7 @@ run-tests(
         my @in = $in.lines;
         my @out = $out.lines;
 
-        is  wrap('   ', ' ', @in.join("\n"), word-break => rx{\d}),
+        is  wrap(q{ } x 3, q{ }, @in.join("\n"), word-break => rx{\d}),
             @out.join("\n"),
             "$filename - wrap_digit.t";
     }
