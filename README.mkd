@@ -21,6 +21,9 @@ The code tries hard to avoid Rakudoisms or Nieczaisms and should work in any rea
 spec-compliant implementation, but there are a few ugly workarounds in the code to make it work in
 those two (which we'd really like to get rid of).
 
+Anything that requires lots of word-breaking action is currently painfully slow in Rakudo.
+`t/belg4mit.t` in particular will take ages to run.
+
 Installing
 ----------
 
