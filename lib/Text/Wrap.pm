@@ -20,7 +20,7 @@ sub wrap(Str $lead-indent,
     my (Nat $intrinsic-width, Nat $lead-width, Nat $body-width) =
         compute-sizes($lead-indent, $body-indent, $tabstop, $columns);
 
-    my int $section-state       = 0; # Flag to control first-line/rest-of-text var swap
+    my Int $section-state       = 0; # Flag to control first-line/rest-of-text var swap
     my Nat $current-width       = $lead-width; # Target width of current line (minus indent)
     my Str $current-indent      = $lead-indent; # String to prefix current line with
     my Str $current-eol         = '';   # Usually \n
@@ -43,7 +43,7 @@ sub wrap(Str $lead-indent,
                             !! $separator;
         }
         if $section-state < 2 {
-            $section-state = $section-state + 1;
+            $section-state++;
         }
 
         # Grab as many whole words as possible that'll fit in current line width
@@ -135,14 +135,14 @@ sub compute-sizes(Str $lead-indent, Str $body-indent, Nat $tabstop, Nat $columns
     }
 
     # Compute available space left for text content
-    my Nat %widths = do for <lead body> {
-        $_ => ([max] %min-widths{$_}, $intrinsic-width - %margins{$_})
-    };
+    my Nat %widths =
+        ($_ => ([max] %min-widths{$_}, $intrinsic-width - %margins{$_})
+            for <lead body>);
 
     # 1 char is reserved for "\n", but remove it if the constraints imposed would already cause
     # every line to overflow.
     # NOTE "all(" causes an error in both R and N here, and ()s are necessary for precedence.
-    %widths>>-- if all (%widths{$_} > %min-widths{$_} for <lead body>);
+    %widths»-- if all (%widths{$_} > %min-widths{$_} for <lead body>);
 
     return $intrinsic-width, %widths<lead body>;
 }
