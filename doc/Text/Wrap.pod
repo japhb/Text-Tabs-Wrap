@@ -15,9 +15,8 @@ Text::Wrap -- line wrapping to form simple paragraphs
     $lines = wrap($initial_tab, $subsequent_tab, @text);
     @paragraphs = fill($initial_tab, $subsequent_tab, @text);
 
-    $long-lines = 'break';
     $columns = %*ENV<COLUMNS> // 80;
-    print wrap('', '', @text, :$long-lines, :$columns);  # Format text for terminal output
+    print wrap('', '', @text, :$columns);  # Format text for terminal output
 =end code
 
 =head1 DESCRIPTION
@@ -79,19 +78,17 @@ the input are preserved.
 =end item
 
 =begin item
-C<:$long-lines> (default: C<'break'>)
+C<:$may-overflow> (default: C<False>)
 
-This defines the behaviour when encountering an oversized "word" (anything that can't be normally
-broken before C<$columns> characters on the line). 3 values are accepted:
+If set to false, C<wrap()> splits oversized words to force them to fit within the requested width.
+If true, oversized words are placed on an output line by themselves, but otherwise left unedited.
+=end item
 
-=defn C<'break'>
-C<wrap()> inserts a line break in the word at column C<$columns>.
+=begin item
+C<:$strict-break> (default: C<False>)
 
-=defn C<'keep'>
-Words longer than C<$columns> are put on a line by themselves, but otherwise left unwrapped.
-
-=defn C<'error'>
-C<wrap()> dies upon finding a word it can't fit into the space allocated.
+If C<wrap()> encounters something that won't fit, C<die()> immediately. This takes precedence over
+C<:$may-overflow>.
 =end item
 
 =head1 EXAMPLES
@@ -127,7 +124,7 @@ Perl 6 rewrite:
 
 Copyright © 2010-2011 Philip Mabon (L<https://github.com/Takadonet>)
 
-Copyright © 2011 Anthony Parsons (L<https://github.com/flussence>)
+Copyright © 2011-2014 Anthony Parsons (L<https://github.com/flussence>)
 
 =head1 LICENSE
 

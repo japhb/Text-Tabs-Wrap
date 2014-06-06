@@ -14,6 +14,6 @@ my $word-break = rx{<?after <[,.]>>};
 
 for @input.kv -> $num, $str {
     lives_ok {
-        wrap('', '', $str, :long-lines<keep>, :columns(9), :$word-break)
+        wrap('', '', $str, :may-overflow, :columns(9), :$word-break)
     }, "Test {1+$num} ran"
 }

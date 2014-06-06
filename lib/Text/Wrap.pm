@@ -1,103 +1,100 @@
-module Text::Wrap:auth<github:flussence>:ver<0.1.0>;
+module Text::Wrap:auth<github:flussence>:ver<0.2.0>;
 use Text::Tabs;
 
 subset Nat of Int where * >= 0;
-subset LineWrap of Str where any(<break keep error>);
 
 sub wrap(Str $lead-indent,
          Str $body-indent,
-         Nat :$tabstop      = 8,
-         Nat :$columns      = 76,
-         Str :$separator    = "\n",
-         Str :$separator2   = Str,
-         Bool :$unexpand    = True,
-         LineWrap :$long-lines  = 'break',
+         Nat :$tabstop          = $?TABSTOP,
+         Nat :$columns          = 76,
+         Str :$separator        = "\n",
+         Str :$separator2       = Str,
+         Bool :$unexpand        = True,
+         Bool :$may-overflow    = False,
+         Bool :$strict-break    = False,
          Regex    :$word-break  = rx{\s},
          *@texts) is export {
 
     my Str $text = expand(:$tabstop, trailing-space-join(@texts));
 
+    my Str @pieces;         # Output buffer
+    my Str $remainder = ''; # Buffer to catch trailing text
+
+    # Precompute a few things before the main loop
     my (Nat $intrinsic-width, Nat $lead-width, Nat $body-width) =
         compute-sizes($lead-indent, $body-indent, $tabstop, $columns);
 
-    my Int $section-state       = 0; # Flag to control first-line/rest-of-text var swap
-    my Nat $current-width       = $lead-width; # Target width of current line (minus indent)
-    my Str $current-indent      = $lead-indent; # String to prefix current line with
-    my Str $current-eol         = '';   # Usually \n
+    my Nat $current-width   = $lead-width; # Target width of current line (minus indent)
+    my Str $current-indent  = $lead-indent; # String to prefix current line with
 
-    my Str $out                 = '';   # Output buffer
-    my Str $remainder           = '';   # Buffer to catch trailing text
-    my Numeric $pos             = 0;    # Input regex cursor
+    # These depend on the two vars above, which change at runtime.
+    # FIXME - would like to write / \N ** 0..$current-width / here.
+    my Regex $greedy-line   = rx/ (\N*) <?{ $0.chars ~~ 0..$current-width }> /;
+    my Regex $soft-wrap     = rx/ ($greedy-line) (<$word-break>|\n+|$) /;
+    my Regex $fallback-wrap = $may-overflow ?? rx/ (\N*?) (<$word-break>|\n+|$) /
+                                            !! $greedy-line;
+    my &output-line = $unexpand
+                    ?? -> $text { &unexpand.assuming(:$tabstop).($current-indent ~ $text) }
+                    !! $current-indent ~ *;
 
-    sub unexpand-if { $unexpand ?? unexpand(:$tabstop, $^a) !! $^a };
+    # The main loop. I'd like to make this a grammar but there's so many variables...
+    my Int $pos = 0;
+    while $pos <= $text.chars {
+        last if $text.match(/\s*$/, :$pos);
 
-    while $pos <= $text.chars and $text !~~ m:p($pos)/\s*$/ {
-        # XXX "NEXT" isn't implemented in Niecza, and "START" was changed to "once" recently in the
-        # spec and that's now NYI in both R and N.
-        if $section-state == 1 {
-            $current-width = $body-width;
-            $current-indent = $body-indent;
-            $current-eol =
-                $separator2 ?? $remainder eq "\n" ?? $remainder
-                                                  !! $separator2
-                            !! $separator;
-        }
-        if $section-state < 2 {
-            $section-state++;
-        }
+        my Match $current-line;
 
         # Grab as many whole words as possible that'll fit in current line width
-        if $text ~~ m:p($pos)/(\N*) <?{ $0.chars ~~ 0..$current-width }> (<$word-break>|\n+|$)/ {
-
-            $pos = $0.to + 1;
-            $remainder = $1.Str;
-            $out ~= unexpand-if($current-eol ~ $current-indent ~ $0);
+        if $current-line = $text.match($soft-wrap, :$pos) {
+            $pos = $current-line[0].to + 1;
+            $remainder = $current-line[1].Str;
+            @pieces.push: output-line($current-line[0]);
 
             next;
         }
 
-        # If that fails, the behaviour depends on the setting of $long-lines:
-        given $long-lines {
-            # Hard-wrap at the specified width
-            when 'break' {
-                if $text ~~ m:p($pos)/(\N*) <?{ $0.chars ~~ 0..$current-width }>/ {
-                    $pos = $/.to;
-                    $remainder = ($separator2 or $separator);
-                    $out ~= unexpand-if($current-eol ~ $current-indent ~ $0);
+        fail "Text will not fit within requested width ($intrinsic-width)"
+            if $strict-break;
 
-                    next;
-                }
-            }
+        # Try again with fallback method if that fails
+        if $current-line = $text.match($fallback-wrap, :$pos) {
+            $pos = $current-line[0].to;
+            $remainder = $may-overflow ?? $current-line[1].Str
+                                       !! ($separator2 // $separator);
+            @pieces.push: output-line($current-line[0]);
 
-            # Grab up to the next word-break, line-break or end of text regardless of length
-            when 'keep' {
-                if $text ~~ m:p($pos)/(\N*?) (<$word-break>|\n+|$)/ {
-                    $pos = $0.to;
-                    $remainder = $1.Str;
-                    $out ~= unexpand-if($current-eol ~ $current-indent ~ $0);
-
-                    next;
-                }
-            }
-
-            # Throw an exception if asked to do so
-            when 'error' {
-                die "Couldn't wrap text to requested text width '$intrinsic-width'";
-            }
+            next;
         }
 
+        # Prevents explosion with (literal) edge cases
         if $intrinsic-width < 2 {
-            # attempt to recover by expanding it
-            warn "Could not wrap text to text width '$intrinsic-width', retrying with 2";
+            warn "Text will not fit within requested width ($intrinsic-width), retrying with 2";
             return wrap($lead-indent, $body-indent, :columns(2), @texts);
         }
-        else {
-            # If we get here, something went wrong
-            die "Could not wrap text to text width '$intrinsic-width' and unable to recover";
+
+        # If this happens things have gone very wrong...
+        die "Text will not fit within requested width ($intrinsic-width), confused";
+
+        # width/indent can be different for the first line vs. subsequent lines, so we have to swap
+        # them after the first iteration. "once {...}" doesn't quite do what we want here so we need
+        # to use a flag variable instead.
+        NEXT {
+            if @pieces.elems == 1 {
+                $current-width = $body-width;
+                $current-indent = $body-indent;
+            }
+
+            @pieces.push:
+                $separator2 ?? $remainder eq "\n" ?? "\n"
+                                                  !! $separator2
+                            !! $separator;
         }
     }
 
-    return $out ~ $remainder;
+    return '' unless @pieces;
+
+    @pieces[*-1] = $remainder;
+    return @pieces.join;
 }
 
 sub fill(Str $lead-indent,
@@ -113,7 +110,7 @@ sub fill(Str $lead-indent,
         .join($lead-indent eq $body-indent ?? "\n\n" !! "\n");
 }
 
-# Joins an array of strings with space between, preferring to use existing trailing spaces.
+# Joins an array of strings with space between, preferring to preserve existing trailing spaces.
 sub trailing-space-join(*@texts) {
     my Str $tail = pop(@texts);
     return @texts.map({ /\s+$/ ?? $_ !! $_ ~ q{ } }).join ~ $tail;
@@ -147,4 +144,4 @@ sub compute-sizes(Str $lead-indent, Str $body-indent, Nat $tabstop, Nat $columns
     return $intrinsic-width, %widths<lead body>;
 }
 
-# vim: set ft=perl6 :
+# vim: ft=perl6 sw=4 ts=4 tw=100

@@ -11,7 +11,7 @@ run-tests(
         my Str $out-str = $out.slurp;
         my &wrapper = &wrap.assuming(q{ } x 3, q{ }, :separator2('='));
 
-        todo 'Known failure' if $filename ~~ any <test.2 test.8 test.12>;
+        todo 'Known failure' if $filename ~~ any <test.2 test.12>;
         subtest {
             is &wrapper($in-str), $out-str, 'rewrap as one string';
 
