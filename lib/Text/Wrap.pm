@@ -1,4 +1,4 @@
-module Text::Wrap:auth<github:flussence>:ver<0.2.0>;
+module Text::Wrap:auth<github:flussence>:ver<0.2.1>;
 use Text::Tabs;
 
 subset Nat of Int where * >= 0;
@@ -28,8 +28,7 @@ sub wrap(Str $lead-indent,
     my Str $current-indent  = $lead-indent; # String to prefix current line with
 
     # These depend on the two vars above, which change at runtime.
-    # FIXME - would like to write / \N ** 0..$current-width / here.
-    my Regex $greedy-line   = rx/ (\N*) <?{ $0.chars ~~ 0..$current-width }> /;
+    my Regex $greedy-line   = rx/ (\N ** {0..$current-width}) /;
     my Regex $soft-wrap     = rx/ ($greedy-line) (<$word-break>|\n+|$) /;
     my Regex $fallback-wrap = $may-overflow ?? rx/ (\N*?) (<$word-break>|\n+|$) /
                                             !! $greedy-line;

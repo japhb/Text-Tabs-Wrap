@@ -13,9 +13,9 @@ Text::Wrap gives you `wrap` and `fill` functions. `wrap` will break up long
 lines; it doesn't join short lines together. `fill` reformats entire blocks of
 text, similar to vi's `gq` command.
 
-## Current status (2014-06-06)
+## Current status (2014-08-02)
 
-Has been tested on a recent Rakudo (`2014.05-149-g28d672540052`) running on
+Has been tested on a recent Rakudo (`2014.07-91-gf5d1870277b9`) running on
 MoarVM, with a few known test failures marked as TODO.
 
 This code is in maintenance mode and not fun to hack on, so if you think you can

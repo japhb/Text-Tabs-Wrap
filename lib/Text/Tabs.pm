@@ -1,4 +1,4 @@
-module Text::Tabs:auth<github:flussence>:ver<0.2.0>;
+module Text::Tabs:auth<github:flussence>:ver<0.2.1>;
 
 subset Nat of Int where * >= 0;
 
